@@ -1,32 +1,41 @@
-var path = require('path');
-var webpack = require('webpack');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
+const path =                    require('path')
+const webpack =                 require('webpack');
+const ExtractTextPlugin =       require('extract-text-webpack-plugin');
+const { VueLoaderPlugin } =     require('vue-loader')
+const HtmlWebpackPlugin =       require('html-webpack-plugin')
+const CopyWebpackPlugin =       require('copy-webpack-plugin')
+const CleanWebpackPlugin =      require('clean-webpack-plugin')
+const SWPrecacheWebpackPlugin = require('sw-precache-webpack-plugin')
 
-var browserTargets = [
-  '> 1%',
-  'iOS >= 8.0',
-  'Android >= 4.4',
-  'Chrome >= 30',
-  'Safari >= 9',
-  'Firefox ESR',
-  'Opera 12.1'
-];
 
-var babelOptions = {
-  babelrc: false,
-  presets: [ ['env', { browsers: browserTargets }] ]
-};
+let browserTargets = [
+    '> 1%',
+    'iOS >= 8.0',
+    'Android >= 4.4',
+    'Chrome >= 30',
+    'Safari >= 9',
+    'Firefox ESR',
+    'Opera 12.1'
+  ];
+  
+let babelOptions = {
+    babelrc: false,
+    presets: [ ['@babel/preset-env'] ]
+  };
 
-module.exports = {
-  watch: process.env.WEBPACK_WATCH === 'true',
+module.exports = (env, argv) => ({
+  mode: argv && argv.mode || 'development',
+  devtool: (argv && argv.mode || 'development') === 'production' ? 'source-map' : 'eval',
+
   entry: './src/main.js',
+
   output: {
-    path: path.resolve(__dirname, './www'),
-    publicPath: '',
+    path: path.resolve(__dirname, 'dist'),
     filename: 'build.js'
   },
+
+  node: false,
+
   module: {
     rules: [
       {
@@ -80,52 +89,46 @@ module.exports = {
       }
     ]
   },
+
+  resolve: {
+    extensions: [
+      '.js',
+      '.vue',
+      '.json'
+    ],
+    alias: {
+      'vue$': 'vue/dist/vue.esm.js',
+      '@': path.resolve(__dirname, 'src')
+    }
+  },
+
   plugins: [
     new ExtractTextPlugin('[name].css'),
+    new CleanWebpackPlugin(),
+    new VueLoaderPlugin(),
     new HtmlWebpackPlugin({
-      template: 'src/index.html'
+      template: path.resolve(__dirname, 'src', 'index.html'),
+      inject: true
     }),
     new CopyWebpackPlugin([{
       from: 'static/'
-    }])
-  ],
-  resolve: {
-    alias: {
-      'vue$': 'vue/dist/vue.esm.js',
-      //// For development:
-      // 'vue-onsenui/esm': path.join(__dirname, '..', 'OnsenUI', 'bindings', 'vue', 'esm'),
-      // 'vue-onsenui$': path.join(__dirname, '..', 'OnsenUI', 'bindings', 'vue', 'dist', 'vue-onsenui'),
-      // 'onsenui$': path.join(__dirname, '..', 'OnsenUI', 'build', 'js', 'onsenui'),
-      // 'onsenui': path.join(__dirname, '..', 'OnsenUI', 'build'),
-    }
-  },
-  devServer: {
-    historyApiFallback: true,
-    noInfo: true
-  },
-  performance: {
-    hints: false
-  },
-  devtool: '#eval-source-map'
-};
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports.devtool = '#source-map';
-  // http://vue-loader.vuejs.org/en/workflow/production.html
-  module.exports.plugins = (module.exports.plugins || []).concat([
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        warnings: false
-      }
-    }),
-    new webpack.LoaderOptionsPlugin({
-      minimize: true
+    }]),
+    new SWPrecacheWebpackPlugin({
+      cacheId: 'my-pwa-vue-app',
+      filename: 'service-worker-cache.js',
+      staticFileGlobs: ['dist/**/*.{js,css}', '/'],
+      minify: true,
+      stripPrefix: 'dist/',
+      dontCacheBustUrlsMatching: /\.\w{6}\./
     })
-  ]);
-}
+  ],
+
+  devServer: {    
+    compress: true,
+    host: 'localhost',
+    https: false,
+    open: true,
+    overlay: true,
+    port: 9000
+  }
+});
