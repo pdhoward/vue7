@@ -3,12 +3,12 @@
   "name": "First Vue PWA App",
   "icons": [
     {
-      "src": "/192.png",
+      "src": "/icons/icon-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/512.png",
+      "src": "/icons/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
