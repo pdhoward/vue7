@@ -111,7 +111,9 @@ module.exports = (env, argv) => ({
       inject: true
     }),
     new CopyWebpackPlugin([{
-      from: 'static/'
+      from: path.resolve(__dirname, 'static'),
+      to: path.resolve(__dirname, 'dist'),
+      toType: 'dir'
     }]),
     new SWPrecacheWebpackPlugin({
       cacheId: 'my-pwa-vue-app',
